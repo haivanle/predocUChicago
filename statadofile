@@ -1,0 +1,43 @@
+Task 1:
+clear
+use "/Users/haivanle/Documents/Coding Task/data/sales_profits_data.dta"
+duplicates drop // quick duplicate check
+gen year = substr(rdate,1,4) // extract year from rdate
+destring year, replace
+bysort siccd year: egen totalsales = total(sales) // generate total sales by summing up all sales group by sic code and year
+gen marketshare = sales/totalsales // generate marketshare
+gen hhi = marketshare^2 // square marketshare
+collapse (sum) hhi, by(siccd year) // sum up marketshare square to get hhi list year siccd hhi // list hhi for each industry by year
+scatter hhi year
+
+Task 2:
+** Running the following code first to create BEA_gross_outputs_sic.dta dataset that has the siccd column
+// clear
+// use "/Users/haivanle/Documents/Coding Task/data/BEA_gross_outputs.dta"
+// duplicates drop
+// joinby naics using "/Users/haivanle/Documents/Coding Task/data/2022-NAICS-to-SIC-Crosswalk.dta" // "merge" the BEA dataset with the crosswalk dataset
+// destring siccd, replace
+// duplicates drop
+clear
+use "/Users/haivanle/Documents/Coding Task/data/sales_profits_data.dta"
+duplicates drop
+gen year = substr(rdate,1,4) // extract year from rdate
+destring year, replace
+duplicates drop
+collapse (sum) sales, by(siccd year) // sum up sales
+merge 1:m year siccd using "/Users/haivanle/Documents/Coding Task/data/BEA_gross_outputs_sic.dta"
+gen marketshare = (sales/1000)/industry_output // industry output was in millions while sales in thousands so I did a conversion here
+gen marketsharesq = marketshare^2 // square marketshare
+collapse (sum) marketsharesq, by(siccd year) // sum up marketshare square to get hhi gen hhi = marketsharesq
+list year siccd hhi // list hhi for each industry by year
+// scatter hhi year
+scatter hhi year if hhi <= 1
+// summarize hhi // there are some outliers in the hhi column
+
+Task 3:
+clear
+use "/Users/haivanle/Documents/Coding Task/data/CommonOwnership.dta" gen year=real(substr(rdate,1,4)) // extract year from date
+bysort siccd year: gen ihhi = beta^2 // calculate beta square
+collapse (sum) ihhi, by(siccd year) // sum up ihhi
+list year siccd ihhi
+scatter ihhi year if ihhi <= 1
